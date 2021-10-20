@@ -6,7 +6,8 @@ import time
 
 def startfile():
     ngc2516mems = ascii.read('/Users/bhealy/Documents/PhD_Thesis/NGC_2516/NGC_2516_allCGmems.dat')
-    ngc2516mems = ngc2516mems[(ngc2516mems['proba'] > 0.5) & (~np.isnan(ngc2516mems['bp_rp']))]
+    #ngc2516mems = ngc2516mems[(ngc2516mems['proba'] > 0.5) & (~np.isnan(ngc2516mems['bp_rp']))]
+    ngc2516mems = ngc2516mems[(ngc2516mems['proba'] > 0.68) & (~np.isnan(ngc2516mems['bp_rp']))]
 
     gaia_ids = ngc2516mems['source_id']
 
