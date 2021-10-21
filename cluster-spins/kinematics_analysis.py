@@ -1,50 +1,17 @@
 import emcee
-from astropy.io import ascii
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import gaussian_filter1d
-from scipy.signal import find_peaks,argrelmin
-from scipy.stats import median_absolute_deviation
-#import eleanor
-import urllib
-import numpy as np
-import matplotlib.pyplot as plt
-import lightkurve as lk
-from lightkurve import TessTargetPixelFile
-#import eleanor
-from astropy.io import ascii,fits
-from astropy.table import Table,join,Column
-import astropy.units as u
-import bokeh
-import sys
-from scipy.signal import savgol_filter
-from requests.exceptions import HTTPError
-import matplotlib.gridspec as gridspec
-import glob
-from PyPDF2 import PdfFileMerger,PdfFileReader
-from scipy.interpolate import CubicSpline
-from scipy.interpolate import interp1d
+from astropy.table import Table
 from scipy.stats import binned_statistic
 import pandas as pd
-from astroquery.gaia import Gaia
-from uncertainties.umath import *
-from uncertainties import ufloat
+#from uncertainties.umath import *
 from uncertainties import unumpy
-import statsmodels.distributions.empirical_distribution as emp
-from astroquery.gaia import Gaia
-from astroquery.mast import Catalogs
-from astropy.coordinates import SkyCoord
-from collections import Counter
-plt.rcParams['font.size']= 18
-import sigfig as sf
-from IPython.display import display, Math
-import pandas as pd
 from scipy.stats import gaussian_kde
 import corner
-from scipy.optimize import minimize
-from zero_point import zpt
 from astroquery.simbad import Simbad
 from astroquery.exceptions import TableParseError
+
+plt.rcParams['font.size']= 18
 
 #def kinematics(stars,cluster):
 def bv_to_bprp(bv):
