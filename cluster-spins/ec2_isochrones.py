@@ -425,10 +425,19 @@ def fit_single_star(sid):
                     ##mod1.set_prior(age=FlatPrior((6.6, 7.1)), feh = GaussianPrior(-0.17049309552238798, .09121834298307405, bounds=[-0.7,0.5]), AV = GaussianPrior(0.49162447, 0.22306725), distance = GaussianPrior(dist, sig_dist, bounds=[dist - 5*sig_dist, dist + 5*sig_dist]))
 
                     ###mod1.set_prior(age=FlatPrior((7., 7.7)), feh = GaussianPrior(-0.14590463888888888, 0.11350522580459868, bounds=[-0.7,0.5]), AV = GaussianPrior(0.6430089, 0.36486796), distance = GaussianPrior(dist, sig_dist, bounds=[dist - 5*sig_dist, dist + 5*sig_dist]))
-                    mod1.set_prior(age=GaussianPrior(7.3, 0.4, bounds=[6,8]), feh = GaussianPrior(-0.14590463888888888, 0.11350522580459868, bounds=[-0.7,0.5]), AV = GaussianPrior(0.6430089, 0.36486796), distance = GaussianPrior(dist, sig_dist, bounds=[dist - 5*sig_dist, dist + 5*sig_dist]))
+                    mod1.set_prior(age=GaussianPrior(7.3, 0.1, bounds=[6,8]), feh = GaussianPrior(-0.14590463888888888, 0.11350522580459868, bounds=[-0.7,0.5]), AV = GaussianPrior(0.6430089, 0.36486796), distance = GaussianPrior(dist, sig_dist, bounds=[dist - 5*sig_dist, dist + 5*sig_dist]))
 
                     mod1.set_bounds(AV=(-1.5,3.5))
 
+                #Alpha Per
+                #Age: 50-75 Myr (Basri & Martin 1998)
+                #Fe/H: -0.07557962452260272, 0.1440535175579019(SDSS/APOGEE DR17)
+                #AV: 0.017124383, 0.062144116 (Bayestar19)
+                elif cluster == 'Alpha_Per':
+
+                    mod1.set_prior(age=GaussianPrior(7.8, 0.1, bounds=[6,8.5]), feh = GaussianPrior(-0.07557962452260272, 0.1440535175579019, bounds=[-0.7,0.5]), AV = GaussianPrior(0.017124383, 0.062144116), distance = GaussianPrior(dist, sig_dist, bounds=[dist - 5*sig_dist, dist + 5*sig_dist]))
+
+                    mod1.set_bounds(AV=(-1.5,1.5))
 
 
                 #mod1.fit(basename=sid,refit=True)

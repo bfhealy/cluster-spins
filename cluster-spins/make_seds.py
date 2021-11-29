@@ -1,5 +1,5 @@
-from isochrones import get_ichrone, SingleStarModel
-from isochrones.priors import AgePrior, AVPrior, DistancePrior, EEP_prior, FehPrior, FlatPrior, GaussianPrior, ChabrierPrior
+#from isochrones import get_ichrone, SingleStarModel
+#from isochrones.priors import AgePrior, AVPrior, DistancePrior, EEP_prior, FehPrior, FlatPrior, GaussianPrior, ChabrierPrior
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -495,7 +495,16 @@ def query_catalogs(targets,apassdata,cluster,skymapperdata=[],sdssdata=[],pansta
 
         if len(sdss_qry) > 0:
             print('SDSS')
-            SED['SDSS_u'] = (sdss_qry['psfMag_u'], sdss_qry['psfMagErr_u'])
+            if (~np.isnan(sdss_qry['psfMag_u'])) & (~np.isnan(sdss_qry['psfMagErr_u'])):
+                SED['SDSS_u'] = (sdss_qry['psfMag_u'], sdss_qry['psfMagErr_u'])
+            if (~np.isnan(sdss_qry['psfMag_g'])) & (~np.isnan(sdss_qry['psfMagErr_g'])):
+                SED['SDSS_g'] = (sdss_qry['psfMag_g'], sdss_qry['psfMagErr_g'])
+            if (~np.isnan(sdss_qry['psfMag_r'])) & (~np.isnan(sdss_qry['psfMagErr_r'])):
+                SED['SDSS_r'] = (sdss_qry['psfMag_r'], sdss_qry['psfMagErr_r'])
+            if (~np.isnan(sdss_qry['psfMag_i'])) & (~np.isnan(sdss_qry['psfMagErr_i'])):
+                SED['SDSS_i'] = (sdss_qry['psfMag_i'], sdss_qry['psfMagErr_i'])
+            if (~np.isnan(sdss_qry['psfMag_z'])) & (~np.isnan(sdss_qry['psfMagErr_z'])):
+                SED['SDSS_z'] = (sdss_qry['psfMag_z'], sdss_qry['psfMagErr_z'])
 
         if len(panstarrs_qry) > 0:
             print('Pan-STARRS')

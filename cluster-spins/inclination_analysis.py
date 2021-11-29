@@ -690,13 +690,13 @@ def log_probability_asym(theta,incempx1,incempy1, err_lo, err_hi, sim_vrot, delt
         return -np.inf
     return lp + log_likelihood_asym(theta, incempx1, incempy1, err_lo, err_hi, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold, tdistrib)
 
-def log_probability_3param(theta,incempx1,incempy1,err, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold=0):
+def log_probability_3param(theta,incempx1,incempy1,err, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold=0, tdistrib=False):
     lp = log_prior_3param(theta)
     if not np.isfinite(lp):
         return -np.inf
     return lp + log_likelihood_3param(theta, incempx1, incempy1, err, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold, tdistrib)
 
-def log_probability_3param_asym(theta,incempx1,incempy1, err_lo, err_hi, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold=0):
+def log_probability_3param_asym(theta,incempx1,incempy1, err_lo, err_hi, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold=0, tdistrib=False):
     lp = log_prior_3param(theta)
     if not np.isfinite(lp):
         return -np.inf
@@ -724,23 +724,23 @@ def fit_inclinations_mcmc_asym(log_probability, incempx1, incempy1, err_lo, err_
 
     return sampler
 
-def fit_inclinations_mcmc_3param(log_probability_3param, incempx1, incempy1, err, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold=0, startvals=[45,90,0], nsteps=10000, nwalkers=50):
+def fit_inclinations_mcmc_3param(log_probability_3param, incempx1, incempy1, err, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold=0, startvals=[45,90,0], nsteps=10000, nwalkers=50, tdistrib=False):
     startvals=np.array(startvals)
     pos = startvals + 1e-4 * np.random.randn(nwalkers, 3)
     nwalkers, ndim = pos.shape
 
-    sampler_3param = emcee.EnsembleSampler(nwalkers, ndim, log_probability_3param, args=(incempx1, incempy1, err, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold))
+    sampler_3param = emcee.EnsembleSampler(nwalkers, ndim, log_probability_3param, args=(incempx1, incempy1, err, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold, tdistrib))
 
     sampler_3param.run_mcmc(pos, nsteps, progress=True)
 
     return sampler_3param
 
-def fit_inclinations_mcmc_3param_asym(log_probability_3param, incempx1, incempy1, err_lo, err_hi, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold=0, startvals=[45,90,0], nsteps=10000, nwalkers=50):
+def fit_inclinations_mcmc_3param_asym(log_probability_3param, incempx1, incempy1, err_lo, err_hi, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold=0, startvals=[45,90,0], nsteps=10000, nwalkers=50, tdistrib=False):
     startvals=np.array(startvals)
     pos = startvals + 1e-4 * np.random.randn(nwalkers, 3)
     nwalkers, ndim = pos.shape
 
-    sampler_3param = emcee.EnsembleSampler(nwalkers, ndim, log_probability_3param_asym, args=(incempx1, incempy1, err_lo, err_hi, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold))
+    sampler_3param = emcee.EnsembleSampler(nwalkers, ndim, log_probability_3param_asym, args=(incempx1, incempy1, err_lo, err_hi, sim_vrot, deltav_ln_frac, sigv_ln_frac, deltaP, deltaR, vsini_threshold, tdistrib))
 
     sampler_3param.run_mcmc(pos, nsteps, progress=True)
 
@@ -778,10 +778,10 @@ def get_flat_samples(sampler,discard=1000):
 
     return flat_samples, flat_lnprob, h_alf, h_lam
 
-def get_flat_samples_3param(sampler_3param):
+def get_flat_samples_3param(sampler_3param,discard=1000):
     labels = ["Alpha","Lambda","Fraction"]
-    flat_samples_3param = sampler_3param.get_chain(discard=1000, flat=True)
-    flat_lnprob_3param = sampler_3param.get_log_prob(discard=1000,flat=True)
+    flat_samples_3param = sampler_3param.get_chain(discard=discard, flat=True)
+    flat_lnprob_3param = sampler_3param.get_log_prob(discard=discard,flat=True)
 
     fig = corner.corner(
         flat_samples_3param, labels=labels,quantiles=[.5,.5,.5])
@@ -795,6 +795,28 @@ def get_flat_samples_3param(sampler_3param):
         display(Math(txt))
     plt.show()
 
+    h_alf=plt.hist(flat_samples_3param[:,0],bins=90)
+    f_val = np.mean(h_alf[1][np.argmax(h_alf[0]):np.argmax(h_alf[0])+2])
+    print(f_val)
+    plt.axvline(f_val,color='red')
+    plt.show()
+
+    h_lam=plt.hist(flat_samples_3param[:,1],bins=90)
+    f_val = np.mean(h_lam[1][np.argmax(h_lam[0]):np.argmax(h_lam[0])+2])
+    print(f_val)
+    plt.axvline(f_val,color='red')
+    plt.show()
+
+    h_f=plt.hist(flat_samples_3param[:,2],bins=90)
+    f_val = np.mean(h_f[1][np.argmax(h_f[0]):np.argmax(h_f[0])+2])
+    print(f_val)
+    plt.axvline(f_val,color='red')
+    plt.show()
+
+    print('Alpha', np.percentile(flat_samples_3param[:,0], [5,16,50,84,95]))
+    print('Lambda', np.percentile(flat_samples_3param[:,1], [5,16,32,50,84,95]))
+    print('f', np.percentile(flat_samples_3param[:,2], [5,16,50,84,95]))
+    print()
     print(sampler_3param.flatchain[np.argmax(sampler_3param.flatlnprobability,axis=0)])
 
-    return flat_samples_3param, flat_lnprob_3param
+    return flat_samples_3param, flat_lnprob_3param, h_alf, h_lam, h_f
