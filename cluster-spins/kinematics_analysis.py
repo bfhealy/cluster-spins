@@ -10,6 +10,7 @@ from scipy.stats import gaussian_kde
 import corner
 from astroquery.simbad import Simbad
 from astroquery.exceptions import TableParseError
+from IPython.display import display, Math
 
 plt.rcParams['font.size']= 18
 
@@ -136,7 +137,9 @@ def log_prior(theta):
     posang_c, vrot, v0, siglos = theta
     #if -np.pi <= posang_c <= np.pi and 0 <= vrot <= 1. and 20 <= v0 <= 30 and 0 <= siglos <= 5:
     #if 0 <= posang_c < 2*np.pi and 0 <= vrot <= 3. and 15 <= v0 <= 35 and 0 <= siglos <= 5:
-    if 5.207 - np.pi <= posang_c < 5.207 + np.pi and 0 <= vrot <= 3. and 0 <= v0 <= 50 and 0 <= siglos <= 5:
+
+    ###if 5.207 - np.pi <= posang_c < 5.207 + np.pi and 0 <= vrot <= 3. and 0 <= v0 <= 50 and 0 <= siglos <= 5:
+    if  0 <= posang_c < 2*np.pi and 0 <= vrot <= 3. and 0 <= v0 <= 50 and 0 <= siglos <= 5:
 
     #if 0 <= vrot <= 3. and 15 <= v0 <= 35 and 0 <= siglos <= 5:
         lp = 0
@@ -287,6 +290,9 @@ def calc_outlying_ruwe(targets,bw=0.2,percentile=0.99):
 
 def make_kinematics_tables(merge_gaia, spectro_data, CRV=None, gdr2=False):
 
+    #cra = np.mean(merge_gaia['ra'])
+    #cdec = np.mean(merge_gaia['dec'])
+
     cra = np.mean(merge_gaia['ra'])
     cdec = np.mean(merge_gaia['dec'])
 
@@ -354,7 +360,9 @@ def make_kinematics_tables(merge_gaia, spectro_data, CRV=None, gdr2=False):
             if tt_rv[i] < 0:
                 tt_rv[i] += 2*np.pi
 
-        vlos_Tbl = Table(data=[sid_rv,bprp_rv,x_rv, y_rv, rr_rv, tt_rv, vperp, pred_vperp],names=['source_id','bp_rp','x_rv','y_rv','r_rv','t_rv','vperp','pred_vperp'])
+        e_vperp = unumpy.std_devs(u_vperp)
+
+        vlos_Tbl = Table(data=[sid_rv,bprp_rv,x_rv, y_rv, rr_rv, tt_rv, vperp, e_vperp, pred_vperp],names=['source_id','bp_rp','x_rv','y_rv','r_rv','t_rv','vperp','e_vperp','pred_vperp'])
 
     ssmems = good_ruwe
 
@@ -452,7 +460,7 @@ def make_kinematics_tables(merge_gaia, spectro_data, CRV=None, gdr2=False):
 
     xyTbl = Table(data=[sid,bprp,x,y,unumpy.nominal_values(u_mux), unumpy.nominal_values(u_muy)], names=['source_id','bp_rp','x','y','mux','muy'])
 
-    rtTbl_mu = Table(data=[sid,bprp,rr,tt,unumpy.nominal_values(u_vr_mu),unumpy.nominal_values(u_vt_mu),x,y,unumpy.nominal_values(u_mux), unumpy.nominal_values(u_muy)],names=['source_id','bp_rp','r','t','mur','mut','x','y','mux','muy'])
+    rtTbl_mu = Table(data=[sid,bprp,rr,tt,unumpy.nominal_values(u_vr_mu),unumpy.std_devs(u_vr_mu),unumpy.nominal_values(u_vt_mu),unumpy.std_devs(u_vt_mu),x,y,unumpy.nominal_values(u_mux), unumpy.nominal_values(u_muy)],names=['source_id','bp_rp','r','t','mur','e_mur','mut','e_mut','x','y','mux','muy'])
     rtTbl_mu.sort('r')
 
     ###
@@ -524,6 +532,94 @@ def bin_kinematics_values(rtTbl, min_delta_r_arcmin=10, N_stars=75):
     width2 = (edges2[1] - edges2[0])
     centers2 = edges[:-1]+np.diff(edges)/2#edges2[1:] - width2/2
 
-    return width, centers, medsr_mu, stdvsr_mu, medst_mu, stdvst_mu
+    return width, centers, edges, medsr_mu, stdvsr_mu, medst_mu, stdvst_mu
 
-#def
+def plot_kinematics_vectors(rtTbl_mu, pred_rtTbl, rdist=0, limit=150, cluster='Cluster'):
+
+    r = rtTbl_mu[rtTbl_mu['r']>rdist]['r'].data
+    x = rtTbl_mu[rtTbl_mu['r']>rdist]['x'].data
+    y = rtTbl_mu[rtTbl_mu['r']>rdist]['y'].data
+    mux = rtTbl_mu[rtTbl_mu['r']>rdist]['mux'].data - pred_rtTbl[pred_rtTbl['r'] > rdist]['pred_mux']
+    muy = rtTbl_mu[rtTbl_mu['r']>rdist]['muy'].data - pred_rtTbl[pred_rtTbl['r'] > rdist]['pred_muy']
+    mut = rtTbl_mu[rtTbl_mu['r']>rdist]['mut'].data - pred_rtTbl[pred_rtTbl['r'] > rdist]['pred_mut']
+    mur = rtTbl_mu[rtTbl_mu['r']>rdist]['mur'].data - pred_rtTbl[pred_rtTbl['r'] > rdist]['pred_mur']
+
+    f=plt.figure(figsize=(7,7))
+    plt.quiver(x,y,mux,muy,np.sign(mut),angles='xy')
+
+    #plt.quiver(x[5],y[5],mux[5],muy[5],np.sign(mut),angles='xy')
+    #plt.colorbar()
+    plt.xlim(limit,-1*limit)
+    plt.ylim(-1*limit,limit)
+    if rdist > 0:
+        plt.title(cluster+', r > '+np.str(rdist) + ' arcmin')
+    else:
+        plt.title(cluster)
+    plt.xlabel('East <---     x [arcmin]')
+    plt.ylabel('y [arcmin]     North --->')
+
+    #f.savefig('/Users/bhealy/Downloads/Praesepe_outer_proper_motions.pdf',bbox_inches='tight')
+
+    return f
+
+def mcmc_rt_bins(rr, mu_rt, e_mu_rt, edges, v_true, sig_true, crv, cdist):
+
+    vrt_plus = mu_rt *(4.74*cdist/1e3)
+
+    e_vrt = e_mu_rt *4.74*cdist/1e3
+    #startvals = np.array([0,0,crv,1])
+    startvals_r = np.array([v_true,sig_true])
+
+
+    labels_rt = [r"$v_{0rt}$",r"$\sigma_{rt}$"]
+    #labels_t = [r"$v_{0t}$",r"$\sigma_{t}$"]
+    #labels = [r"$\theta_{c}$", "$v_{rot}$", "$v_{0}$","$\sigma_{LOS}$"]
+
+    pos_r = startvals_r + 1e-4 * np.random.randn(100, 2)
+    nwalkers, ndim = pos_r.shape
+
+    bnz = len(edges) - 1
+
+    medsr_mcmc = np.zeros(bnz)
+    rerr_lo_mcmc = np.zeros(bnz)
+    rerr_hi_mcmc = np.zeros(bnz)
+
+    sigr_mcmc = np.zeros(bnz)
+    srerr_lo_mcmc = np.zeros(bnz)
+    srerr_hi_mcmc = np.zeros(bnz)
+
+    for i in range(bnz):
+        rindx = (rr > edges[i]) & (rr < edges[i+1])
+
+        sampler_r = emcee.EnsembleSampler(nwalkers, ndim, log_probability_r, args=(vrt_plus[rindx],e_vrt[rindx]))
+        sampler_r.run_mcmc(pos_r, 5000, progress=True);
+
+        maxprob_indx = np.argmax(sampler_r.get_log_prob(discard=500, thin=15, flat=True))
+        flat_samples_r = sampler_r.get_chain(discard=500, thin=15, flat=True)
+
+       #medsr_mcmc[i] = flat_samples_r[maxprob_indx,0]
+        medsr_mcmc[i] = np.percentile(flat_samples_r[:,0],50)
+
+        rerr_lo_mcmc[i] = medsr_mcmc[i] - np.percentile(flat_samples_r[:,0], 16)
+        rerr_hi_mcmc[i] = np.percentile(flat_samples_r[:,0], 84) - medsr_mcmc[i]
+
+
+        sigr_mcmc[i] = flat_samples_r[maxprob_indx,1]
+        srerr_lo_mcmc[i] = sigr_mcmc[i] - np.percentile(flat_samples_r[:,1], 16)
+        srerr_hi_mcmc[i] = np.percentile(flat_samples_r[:,1], 84) - sigr_mcmc[i]
+
+    sampler_r = emcee.EnsembleSampler(nwalkers, ndim, log_probability_r, args=(vrt_plus,e_vrt))
+    sampler_r.run_mcmc(pos_r, 5000, progress=True);
+    flat_samples_r = sampler_r.get_chain(discard=100, thin=15, flat=True)
+    fig = corner.corner(
+        flat_samples_r, labels=labels_rt)#, truths=[posang_c_true, vrot_true, v0_true, siglos_true]
+    #);
+    for i in range(2):
+        mcmc = np.percentile(flat_samples_r[:, i], [16, 50, 84])
+        q = np.diff(mcmc)
+        txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
+        txt = txt.format(mcmc[1], q[0], q[1], labels_rt[i])
+        #print(txt)
+        display(Math(txt))
+
+    return medsr_mcmc, rerr_lo_mcmc, rerr_hi_mcmc, sigr_mcmc, srerr_lo_mcmc, srerr_hi_mcmc, fig
