@@ -12,6 +12,10 @@ from astroquery.simbad import Simbad
 from astroquery.exceptions import TableParseError
 from IPython.display import display, Math
 
+#Our tangential velocity convention:
+#Positive -> clockwise
+#Negative -> counterclockwise
+
 plt.rcParams['font.size']= 18
 
 #def kinematics(stars,cluster):
@@ -132,14 +136,44 @@ def log_likelihood(theta, vperp, e_vperp, posangs):
 
     #return #-np.sum(np.log(2*np.pi*np.sqrt(siglos**2 + e_vperp**2)) - ((vperp - vc)**2 / (2*siglos**2 + e_vperp**2)))
 #    return -0.5 * np.sum(A + B) + np.sum(C)
-
+'''
 def log_prior(theta):
     posang_c, vrot, v0, siglos = theta
     #if -np.pi <= posang_c <= np.pi and 0 <= vrot <= 1. and 20 <= v0 <= 30 and 0 <= siglos <= 5:
     #if 0 <= posang_c < 2*np.pi and 0 <= vrot <= 3. and 15 <= v0 <= 35 and 0 <= siglos <= 5:
 
     ###if 5.207 - np.pi <= posang_c < 5.207 + np.pi and 0 <= vrot <= 3. and 0 <= v0 <= 50 and 0 <= siglos <= 5:
-    if  0 <= posang_c < 2*np.pi and 0 <= vrot <= 3. and 0 <= v0 <= 50 and 0 <= siglos <= 5:
+    #if  0 <= posang_c < 2*np.pi and 0 <= vrot <= 3. and 0 <= v0 <= 50 and 0 <= siglos <= 5:
+    if  0 <= posang_c < 2*np.pi and 0 <= vrot <= 50. and -50 <= v0 <= 50 and 0 <= siglos <= 50:
+
+    #if 0 <= vrot <= 3. and 15 <= v0 <= 35 and 0 <= siglos <= 5:
+        lp = 0
+    else:
+        lp = -np.inf
+
+        #return 0.0
+        #lp = 0
+
+    #GAUSS PRIOR ON THETA
+    #mn= 6.3
+    #sgma = 1.3
+    #lp -= 0.5*((posang_c - mn)/sgma)**2
+
+    #if 0 <= posang_c < np.pi and -3 <= vrot <= 3. and 15 <= v0 <= 35 and 0 < siglos <= 5:
+    #if -180 <= posang_c <= 180 and 0. <= vrot <= 1. and 20 <= v0 <= 30 and 0 <= siglos <= 5:
+    #return -np.inf
+    return lp
+'''
+
+def log_prior(theta, pc0):
+    posang_c, vrot, v0, siglos = theta
+    #if -np.pi <= posang_c <= np.pi and 0 <= vrot <= 1. and 20 <= v0 <= 30 and 0 <= siglos <= 5:
+    #if 0 <= posang_c < 2*np.pi and 0 <= vrot <= 3. and 15 <= v0 <= 35 and 0 <= siglos <= 5:
+
+    ###if 5.207 - np.pi <= posang_c < 5.207 + np.pi and 0 <= vrot <= 3. and 0 <= v0 <= 50 and 0 <= siglos <= 5:
+    #if  0 <= posang_c < 2*np.pi and 0 <= vrot <= 3. and 0 <= v0 <= 50 and 0 <= siglos <= 5:
+    #if  0 <= posang_c < 2*np.pi and 0 <= vrot <= 50. and -50 <= v0 <= 50 and 0 <= siglos <= 50:
+    if  pc0 - np.pi <= posang_c < pc0 + np.pi and 0 <= vrot <= 50. and -50 <= v0 <= 50 and 0 <= siglos <= 50:
 
     #if 0 <= vrot <= 3. and 15 <= v0 <= 35 and 0 <= siglos <= 5:
         lp = 0
@@ -159,9 +193,8 @@ def log_prior(theta):
     #return -np.inf
     return lp
 
-
-def log_probability(theta, vperp, e_vperp, posangs):
-    lp = log_prior(theta)
+def log_probability(theta, vperp, e_vperp, posangs, pc0):
+    lp = log_prior(theta, pc0)
     if not np.isfinite(lp):
         return -np.inf
     return lp + log_likelihood(theta, vperp, e_vperp, posangs)
@@ -614,6 +647,8 @@ def mcmc_rt_bins(rr, mu_rt, e_mu_rt, edges, v_true, sig_true, crv, cdist):
     fig = corner.corner(
         flat_samples_r, labels=labels_rt)#, truths=[posang_c_true, vrot_true, v0_true, siglos_true]
     #);
+    plt.show()
+
     for i in range(2):
         mcmc = np.percentile(flat_samples_r[:, i], [16, 50, 84])
         q = np.diff(mcmc)
@@ -622,4 +657,141 @@ def mcmc_rt_bins(rr, mu_rt, e_mu_rt, edges, v_true, sig_true, crv, cdist):
         #print(txt)
         display(Math(txt))
 
+    centers = edges[:-1]+np.diff(edges)/2
+    plt.scatter(centers,medsr_mcmc)
+    plt.errorbar(centers,medsr_mcmc,yerr=[rerr_lo_mcmc,rerr_hi_mcmc])
+    plt.show()
+
+    plt.scatter(centers,sigr_mcmc)
+    plt.errorbar(centers,sigr_mcmc,yerr=[srerr_lo_mcmc,srerr_hi_mcmc])
+    plt.show()
+
     return medsr_mcmc, rerr_lo_mcmc, rerr_hi_mcmc, sigr_mcmc, srerr_lo_mcmc, srerr_hi_mcmc, fig
+
+def mcmc_vlos(vperp_plus, e_vperp, posangs, posang_c_true, vrot_true, v0_true, siglos_true):
+
+    startvals = np.array([posang_c_true,vrot_true,v0_true,siglos_true])
+    pos = startvals + 1e-4 * np.random.randn(100, 4)
+    nwalkers, ndim = pos.shape
+
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, args=(vperp_plus, e_vperp, posangs, posang_c_true))
+    #sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, args=(vperp_plus, e_vperp, posangs))
+
+    sampler.run_mcmc(pos, 5000, progress=True)
+
+    #plt.rcParams['font.size']=17
+    labels = [r"$\theta_{c}$", r"$v_{rot}$", r"$v_{0}$",r"$\sigma_{LOS}$"]
+
+    #flat_samples = sampler.get_chain(discard=100, thin=15, flat=True)
+    flat_samples = sampler.get_chain(discard=500, thin=15, flat=True)
+    logprob = sampler.get_log_prob(discard=500, thin=15, flat=True)
+
+    fig = corner.corner(
+        flat_samples, labels=labels,max_n_ticks=4)#, truths=[posang_c_true, vrot_true, v0_true, siglos_true]
+    #);
+    for i in range(4):
+        mcmc = np.percentile(flat_samples[:, i], [16, 50, 84])
+        q = np.diff(mcmc)
+        txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
+        txt = txt.format(mcmc[1], q[0], q[1], labels[i])
+        #print(txt)
+        display(Math(txt))
+
+    mcmc_posang_c = np.percentile(flat_samples[:, 0], [16, 50, 84])
+    q_posang_c = np.diff(mcmc_posang_c)
+    posang_c = mcmc_posang_c[1]
+    posang_c_lo_err = q_posang_c[0]
+    posang_c_hi_err = q_posang_c[1]
+
+    mcmc_vrot = np.percentile(flat_samples[:, 1], [16, 50, 84])
+    q_vrot = np.diff(mcmc_vrot)
+    vrot = mcmc_vrot[1]
+    vrot_lo_err = q_vrot[0]
+    vrot_hi_err = q_vrot[1]
+
+    mcmc_v0 = np.percentile(flat_samples[:, 2], [16, 50, 84])
+    q_v0 = np.diff(mcmc_v0)
+    v0 = mcmc_v0[1]
+    v0_lo_err = q_v0[0]
+    v0_hi_err = q_v0[1]
+
+    mcmc_siglos = np.percentile(flat_samples[:, 3], [16, 50, 84])
+    q_siglos = np.diff(mcmc_siglos)
+    siglos = mcmc_siglos[1]
+    siglos_lo_err = q_siglos[0]
+    siglos_hi_err = q_siglos[1]
+
+    return posang_c, posang_c_lo_err, posang_c_hi_err, vrot, vrot_lo_err, vrot_hi_err, v0, v0_lo_err, v0_hi_err, siglos, siglos_lo_err, siglos_hi_err, fig
+
+def store_mcmc_values(cluster, pred_rtTbl, centers,medsr_mcmc,sigr_mcmc,rerr_lo_mcmc,rerr_hi_mcmc,srerr_lo_mcmc,srerr_hi_mcmc,medst_mcmc,sigt_mcmc,terr_lo_mcmc,
+terr_hi_mcmc,sterr_lo_mcmc,sterr_hi_mcmc, posang_c, posang_c_lo_err, posang_c_hi_err, vrot, vrot_lo_err, vrot_hi_err, v0, v0_lo_err, v0_hi_err, siglos, siglos_lo_err, siglos_hi_err):
+
+    pred_rtTbl.to_pandas().set_index('r').to_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_pred_rtTbl.csv')
+
+    Table(data=[centers,medsr_mcmc,sigr_mcmc,rerr_lo_mcmc,rerr_hi_mcmc,srerr_lo_mcmc,srerr_hi_mcmc,medst_mcmc,sigt_mcmc,terr_lo_mcmc,
+    terr_hi_mcmc,sterr_lo_mcmc,sterr_hi_mcmc],names=['centers','medsr_mcmc','sigr_mcmc','rerr_lo_mcmc','rerr_hi_mcmc','srerr_lo_mcmc',
+    'srerr_hi_mcmc','medst_mcmc','sigt_mcmc','terr_lo_mcmc','terr_hi_mcmc','sterr_lo_mcmc','sterr_hi_mcmc']).to_pandas().set_index('centers').to_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_kinematics_values.csv')
+
+    pd.DataFrame({'posang_c':[posang_c],'posang_c_lo_err':[posang_c_lo_err],'posang_c_hi_err':[posang_c_hi_err],'vrot':[vrot],'vrot_lo_err':[vrot_lo_err],
+    'vrot_hi_err':[vrot_hi_err],'v0':[v0],'v0_lo_err':[v0_lo_err],'v0_hi_err':[v0_hi_err],'siglos':[siglos],'siglos_lo_err':[siglos_lo_err],
+    'siglos_hi_err':[siglos_hi_err]}).set_index('posang_c').to_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_LOS_kinematics.csv')
+
+    return
+
+def store_mcmc_values_rt(cluster, pred_rtTbl, centers,medsr_mcmc,sigr_mcmc,rerr_lo_mcmc,rerr_hi_mcmc,srerr_lo_mcmc,srerr_hi_mcmc,medst_mcmc,sigt_mcmc,terr_lo_mcmc,
+terr_hi_mcmc,sterr_lo_mcmc,sterr_hi_mcmc):
+
+    pred_rtTbl.to_pandas().set_index('r').to_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_pred_rtTbl.csv')
+
+    Table(data=[centers,medsr_mcmc,sigr_mcmc,rerr_lo_mcmc,rerr_hi_mcmc,srerr_lo_mcmc,srerr_hi_mcmc,medst_mcmc,sigt_mcmc,terr_lo_mcmc,
+    terr_hi_mcmc,sterr_lo_mcmc,sterr_hi_mcmc],names=['centers','medsr_mcmc','sigr_mcmc','rerr_lo_mcmc','rerr_hi_mcmc','srerr_lo_mcmc',
+    'srerr_hi_mcmc','medst_mcmc','sigt_mcmc','terr_lo_mcmc','terr_hi_mcmc','sterr_lo_mcmc','sterr_hi_mcmc']).to_pandas().set_index('centers').to_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_kinematics_values.csv')
+
+    return
+
+def store_mcmc_values_los(cluster, posang_c, posang_c_lo_err, posang_c_hi_err, vrot, vrot_lo_err, vrot_hi_err, v0, v0_lo_err, v0_hi_err, siglos, siglos_lo_err, siglos_hi_err):
+    pd.DataFrame({'posang_c':[posang_c],'posang_c_lo_err':[posang_c_lo_err],'posang_c_hi_err':[posang_c_hi_err],'vrot':[vrot],'vrot_lo_err':[vrot_lo_err],
+    'vrot_hi_err':[vrot_hi_err],'v0':[v0],'v0_lo_err':[v0_lo_err],'v0_hi_err':[v0_hi_err],'siglos':[siglos],'siglos_lo_err':[siglos_lo_err],
+    'siglos_hi_err':[siglos_hi_err]}).set_index('posang_c').to_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_LOS_kinematics.csv')
+
+    return
+
+def read_mcmc_values(cluster):
+
+    kinematics = pd.read_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_kinematics_values.csv')
+    pred_rtTbl = pd.read_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_pred_rtTbl.csv')
+    los_kinematics = pd.read_csv('/Users/bhealy/Documents/PhD_Thesis/Phase_3/paperdata/'+cluster+'/'+cluster+'_LOS_kinematics.csv')
+
+    centers=kinematics['centers']
+    medsr_mcmc=kinematics['medsr_mcmc']
+    sigr_mcmc=kinematics['sigr_mcmc']
+    rerr_lo_mcmc=kinematics['rerr_lo_mcmc']
+    rerr_hi_mcmc=kinematics['rerr_hi_mcmc']
+    srerr_lo_mcmc=kinematics['srerr_lo_mcmc']
+    srerr_hi_mcmc=kinematics['srerr_hi_mcmc']
+    medst_mcmc=kinematics['medst_mcmc']
+    sigt_mcmc=kinematics['sigt_mcmc']
+    terr_lo_mcmc=kinematics['terr_lo_mcmc']
+    terr_hi_mcmc=kinematics['terr_hi_mcmc']
+    sterr_lo_mcmc=kinematics['sterr_lo_mcmc']
+    sterr_hi_mcmc=kinematics['sterr_hi_mcmc']
+
+    posang_c = los_kinematics['posang_c'].values[0]
+    posang_c_lo_err = los_kinematics['posang_c_lo_err'].values[0]
+    posang_c_hi_err = los_kinematics['posang_c_hi_err'].values[0]
+
+    vrot = los_kinematics['vrot'].values[0]
+    vrot_lo_err = los_kinematics['vrot_lo_err'].values[0]
+    vrot_hi_err = los_kinematics['vrot_hi_err'].values[0]
+
+    v0 = los_kinematics['v0'].values[0]
+    v0_lo_err = los_kinematics['v0_lo_err'].values[0]
+    v0_hi_err = los_kinematics['v0_hi_err'].values[0]
+
+    siglos = los_kinematics['siglos'].values[0]
+    siglos_lo_err = los_kinematics['siglos_lo_err'].values[0]
+    siglos_hi_err = los_kinematics['siglos_hi_err'].values[0]
+
+
+
+    return kinematics, pred_rtTbl, los_kinematics, centers,medsr_mcmc,sigr_mcmc,rerr_lo_mcmc,rerr_hi_mcmc,srerr_lo_mcmc,srerr_hi_mcmc,medst_mcmc,sigt_mcmc,terr_lo_mcmc,terr_hi_mcmc,sterr_lo_mcmc,sterr_hi_mcmc, posang_c, posang_c_lo_err, posang_c_hi_err, vrot, vrot_lo_err, vrot_hi_err, v0, v0_lo_err, v0_hi_err, siglos, siglos_lo_err, siglos_hi_err
