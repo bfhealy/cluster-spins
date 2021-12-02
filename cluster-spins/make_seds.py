@@ -48,7 +48,7 @@ def plot_obs_SED(SED,fgsz=(8,8)):
                 'PS_g':'PS_g_mag', 'PS_r':'PS_r_mag', 'PS_i':'PS_i_mag', 'PS_z':'PS_z_mag',
                 'SDSS_g':'SDSS_g_mag', 'SDSS_r':'SDSS_r_mag', 'SDSS_i':'SDSS_i_mag', 'SDSS_z':'SDSS_z_mag','SDSS_u':'SDSS_u_mag',
                 'SkyMapper_u':'SkyMapper_u_mag', 'SkyMapper_v':'SkyMapper_v_mag', 'SkyMapper_g':'SkyMapper_g_mag',
-                'SkyMapper_r':'SkyMapper_r_mag', 'SkyMapper_i':'SkyMapper_i_mag', 'SkyMapper_z':'SkyMapper_z_mag'
+                'SkyMapper_r':'SkyMapper_r_mag', 'SkyMapper_i':'SkyMapper_i_mag', 'SkyMapper_z':'SkyMapper_z_mag','Gaia_G_DR2Rev':'Gaia_G_DR2Rev_mag'
                 }
 
 
@@ -105,7 +105,7 @@ def plot_SED_fit(SED,mod1,fgsz=(8,8)):
                 'PS_g':'PS_g_mag', 'PS_r':'PS_r_mag', 'PS_i':'PS_i_mag', 'PS_z':'PS_z_mag',
                 'SDSS_g':'SDSS_g_mag', 'SDSS_r':'SDSS_r_mag', 'SDSS_i':'SDSS_i_mag', 'SDSS_z':'SDSS_z_mag','SDSS_u':'SDSS_u_mag',
                 'SkyMapper_u':'SkyMapper_u_mag', 'SkyMapper_v':'SkyMapper_v_mag', 'SkyMapper_g':'SkyMapper_g_mag',
-                'SkyMapper_r':'SkyMapper_r_mag', 'SkyMapper_i':'SkyMapper_i_mag', 'SkyMapper_z':'SkyMapper_z_mag'
+                'SkyMapper_r':'SkyMapper_r_mag', 'SkyMapper_i':'SkyMapper_i_mag', 'SkyMapper_z':'SkyMapper_z_mag','Gaia_G_DR2Rev':'Gaia_G_DR2Rev_mag'
                 }
 
 
@@ -184,7 +184,7 @@ def plot_SED_fit_mags(SED,mod1,fgsz=(8,8)):
                 'PS_g':'PS_g_mag', 'PS_r':'PS_r_mag', 'PS_i':'PS_i_mag', 'PS_z':'PS_z_mag',
                 'SDSS_g':'SDSS_g_mag', 'SDSS_r':'SDSS_r_mag', 'SDSS_i':'SDSS_i_mag', 'SDSS_z':'SDSS_z_mag',
                 'SkyMapper_u':'SkyMapper_u_mag', 'SkyMapper_v':'SkyMapper_v_mag', 'SkyMapper_g':'SkyMapper_g_mag',
-                'SkyMapper_r':'SkyMapper_r_mag', 'SkyMapper_i':'SkyMapper_i_mag', 'SkyMapper_z':'SkyMapper_z_mag'
+                'SkyMapper_r':'SkyMapper_r_mag', 'SkyMapper_i':'SkyMapper_i_mag', 'SkyMapper_z':'SkyMapper_z_mag','Gaia_G_DR2Rev':'Gaia_G_DR2Rev_mag'
                 }
 
 
