@@ -820,3 +820,37 @@ def get_flat_samples_3param(sampler_3param,discard=1000):
     print(sampler_3param.flatchain[np.argmax(sampler_3param.flatlnprobability,axis=0)])
 
     return flat_samples_3param, flat_lnprob_3param, h_alf, h_lam, h_f
+
+def sample_alpha_lambda_values(alpha_vec, lamda_vec, marginal_alpha, marginal_lambda, flat_samples, N_samples=1000,N_final_vals=100, rightskew=False):
+
+    rand_alphas = np.random.choice(alpha_vec, N_samples, p=marginal_alpha/np.sum(marginal_alpha))
+    rand_lambdas = np.random.choice(lamda_vec, N_samples, p=marginal_lambda/np.sum(marginal_lambda))
+
+    onesig_alpha_vals = rand_alphas[(rand_alphas > np.percentile(flat_samples[:,0], 16)) & (rand_alphas < np.percentile(flat_samples[:,0], 84))]
+    if rightskew:
+        onesig_lambda_vals = rand_lambdas[(rand_lambdas > np.percentile(flat_samples[:,1], 32))]
+    else:
+        onesig_lambda_vals = rand_lambdas[(rand_lambdas > np.percentile(flat_samples[:,1], 16)) & (rand_lambdas < np.percentile(flat_samples[:,1], 84))]
+
+
+    onesig_alpha_vals=onesig_alpha_vals[0:N_final_vals]
+    onesig_lambda_vals=onesig_lambda_vals[0:N_final_vals]
+
+    return onesig_alpha_vals, onesig_lambda_vals
+
+def sample_alpha_lambda_values_new(alpha_vec, lamda_vec, marginal_alpha, marginal_lambda, percentile_16_alpha, percentile_84_alpha, percentile_16_lambda, percentile_32_lambda, percentile_84_lambda, N_samples=1000,N_final_vals=100, rightskew=False):
+
+    rand_alphas = np.random.choice(alpha_vec, N_samples, p=marginal_alpha/np.sum(marginal_alpha))
+    rand_lambdas = np.random.choice(lamda_vec, N_samples, p=marginal_lambda/np.sum(marginal_lambda))
+
+    onesig_alpha_vals = rand_alphas[(rand_alphas > percentile_16_alpha) & (rand_alphas < percentile_84_alpha)]
+    if rightskew:
+        onesig_lambda_vals = rand_lambdas[(rand_lambdas > percentile_32_lambda)]
+    else:
+        onesig_lambda_vals = rand_lambdas[(rand_lambdas > percentile_16_lambda) & (rand_lambdas < percentile_84_lambda)]
+
+
+    onesig_alpha_vals=onesig_alpha_vals[0:N_final_vals]
+    onesig_lambda_vals=onesig_lambda_vals[0:N_final_vals]
+
+    return onesig_alpha_vals, onesig_lambda_vals
