@@ -555,10 +555,10 @@ def get_acf_period(lc,smth=100,min_prominence=0.1,min_horiz_dist=10,use_first_pe
     #y = (data['flux'] - 1) * 1e3
     #yerr = (data['flux_err']) * 1e3
 
-    t = lc.time
-    y = (lc.flux-1) * 1e3
+    t = lc.time.value
+    y = (lc.flux.value-1) * 1e3
     #print(y)
-    yerr = lc.flux_err * 1e3
+    yerr = lc.flux_err.value * 1e3
 
     delta_t = np.median(np.diff(t))
     new_t = np.arange(t.min(), t.max(), delta_t)
